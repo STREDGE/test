@@ -35,7 +35,7 @@ class ModsActivity : Activity() {
     private val main = Handler(Looper.getMainLooper())
     private val io = Executors.newSingleThreadExecutor()
     private lateinit var bridge: BridgeClient
-    private lateinit var title: TextView
+    private lateinit var titleView: TextView
     private lateinit var status: TextView
     private lateinit var list: ListView
     private var section = Section.CLEO
@@ -62,8 +62,8 @@ class ModsActivity : Activity() {
     private fun buildUi(): View {
         val pad = (12 * resources.displayMetrics.density).toInt()
         val root = LinearLayout(this).apply { orientation = LinearLayout.VERTICAL; setPadding(pad, pad, pad, pad) }
-        title = TextView(this).apply { textSize = 20f; setTypeface(typeface, Typeface.BOLD) }
-        root.addView(title)
+        titleView = TextView(this).apply { textSize = 20f; setTypeface(typeface, Typeface.BOLD) }
+        root.addView(titleView)
         val tabs = LinearLayout(this).apply { orientation = LinearLayout.HORIZONTAL }
         Section.entries.forEach { s ->
             tabs.addView(
@@ -107,7 +107,7 @@ class ModsActivity : Activity() {
     // ---------- списки ----------
 
     private fun reload() {
-        title.text = section.label
+        titleView.text = section.label
         bg("Загрузка…") {
             val items = if (section == Section.IMG) findImgs() else bridge.list(section.dir).filter { !it.dir || section != Section.AML }
             main.post {
@@ -238,19 +238,23 @@ class ModsActivity : Activity() {
             var n = 0
             val handle = { path: String, input: java.io.InputStream ->
                 val f = byPath[path.replace('\\', '/').trimStart('/')]
-                if (f?.destination != null) when (f.target) {
-                    ModTarget.CLEO, ModTarget.AML_MOD, ModTarget.AML_CONFIG, ModTarget.GAME_FILE -> {
-                        if (f.target == ModTarget.GAME_FILE) backupGameFile(f.destination)
-                        bridge.write(f.destination, input)
-                        n++
+                val dest = f?.destination
+                if (f != null && dest != null) {
+                    when (f.target) {
+                        ModTarget.CLEO, ModTarget.AML_MOD, ModTarget.AML_CONFIG, ModTarget.GAME_FILE -> {
+                            if (f.target == ModTarget.GAME_FILE) backupGameFile(dest)
+                            bridge.write(dest, input)
+                            n++
+                        }
+                        ModTarget.IMG -> {
+                            val tmp = File(cacheDir, "img-import/$dest").apply { parentFile!!.mkdirs() }
+                            tmp.outputStream().use { input.copyTo(it) }
+                            imgFiles[dest] = tmp
+                        }
+                        else -> Unit
                     }
-                    ModTarget.IMG -> {
-                        val tmp = File(cacheDir, "img-import/${f.destination}").apply { parentFile!!.mkdirs() }
-                        tmp.outputStream().use { input.copyTo(it) }
-                        imgFiles[f.destination] = tmp
-                    }
-                    else -> Unit
                 }
+                Unit
             }
             if (ModArchive.detect(archive) == ModArchive.Kind.UNKNOWN) {
                 archive.inputStream().use { handle(name, it) }
