@@ -22,7 +22,10 @@ jobs:
       - name: Build libAML.so
         working-directory: native/build/aml
         run: |
-          "$ANDROID_NDK_LATEST_HOME/ndk-build" NDK_PROJECT_PATH=. APP_BUILD_SCRIPT=./Android.mk NDK_APPLICATION_MK=./Application.mk -j"$(nproc)"
+          # Как в их build.ps1: сначала ARMPatch (кладёт libarmpatch.a в obj/local/<abi>/), потом AML.
+          NDK="$ANDROID_NDK_LATEST_HOME/ndk-build"
+          "$NDK" NDK_PROJECT_PATH=. APP_BUILD_SCRIPT=./ARMPatch/armpatch_src/Android.mk NDK_APPLICATION_MK=./ARMPatch/armpatch_src/Application.mk NDK_DEBUG=0 -j"$(nproc)"
+          "$NDK" NDK_PROJECT_PATH=. APP_BUILD_SCRIPT=./Android.mk NDK_APPLICATION_MK=./Application.mk NDK_DEBUG=0 -j"$(nproc)"
           find libs -name '*.so' -exec ls -la {} \;
 
       - name: Collect payload
