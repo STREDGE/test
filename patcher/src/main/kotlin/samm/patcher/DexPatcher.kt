@@ -74,6 +74,13 @@ object DexPatcher {
         return Result(site.dexName, store.data, site.classType, site.method.name, site.kind)
     }
 
+    /** Где встанет хук (без изменения dex) — для отчёта перед патчем. */
+    fun describeHook(dexes: Map<String, ByteArray>, mainActivity: String?, gameLib: String = "GTASA"): String {
+        val parsed = dexes.mapValues { load(it.value) }
+        val site = findLoadLibrarySite(parsed, gameLib) ?: findOnCreateSite(parsed, mainActivity) ?: return "не найдено"
+        return "${site.dexName}: ${site.classType}->${site.method.name} @${site.insertAt} (${site.kind})"
+    }
+
     /** Собрать отдельный dex из классов с префиксом [prefix] (наш мост из APK менеджера). */
     fun extractClasses(dexes: Collection<ByteArray>, prefix: String = BRIDGE_PREFIX): ByteArray {
         var opcodes: Opcodes? = null

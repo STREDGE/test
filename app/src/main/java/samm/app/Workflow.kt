@@ -40,7 +40,12 @@ class Workflow(private val ctx: Context, private val log: (String) -> Unit) {
             appendLine("android=${Build.VERSION.RELEASE} (sdk ${Build.VERSION.SDK_INT})")
             appendLine("device=${Build.MANUFACTURER} ${Build.MODEL}")
             appendLine("deviceAbis=${Game.deviceAbis.joinToString(",")}")
+            appendLine("splits=" + gameApks.parts.joinToString(",") { it.label })
+            appendLine("extractNativeLibs=${gameApks.base.manifest.extractNativeLibs}")
+            appendLine("minSdk=${gameApks.base.manifest.minSdk}")
+            appendLine(runCatching { ApkPatcher.describeHook(game.apks) }.getOrElse { "hook=ошибка: ${it.message}" })
         }
+        log(info.lines().first { it.startsWith("mainActivity") || it.startsWith("hook") })
         writeDownload("libGTASA_${game.versionName}_$abi.txt", "text/plain") { it.write(info.toByteArray()); "" }
         log("Готово. SHA-256: $sha")
         return "Загрузки/$name"
@@ -98,7 +103,7 @@ class Workflow(private val ctx: Context, private val log: (String) -> Unit) {
         return signed
     }
 
-    /** assets/payload/<abi>/*.so из APK менеджера. */
+    /** assets/payload/<abi>/…so из APK менеджера. */
     private fun loadPayload(): Map<String, Map<String, ByteArray>> {
         val am = ctx.assets
         val abis = am.list("payload")?.toList().orEmpty()

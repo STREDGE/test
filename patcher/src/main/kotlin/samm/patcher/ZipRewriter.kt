@@ -14,7 +14,7 @@ class ZipPayload(val bytes: ByteArray, val stored: Boolean)
  * Пересобирает zip (APK):
  *  - нетронутые записи копируются как есть, без перепаковки (сохраняется метод сжатия);
  *  - записи из [replace] заменяются, из [add] — добавляются;
- *  - старая подпись (META-INF/*.SF, *.RSA, …) и [drop] выкидываются.
+ *  - старая подпись (файлы .SF, .RSA, MANIFEST.MF в META-INF) и [drop] выкидываются.
  * Выравнивание и подпись делает потом apksig.
  */
 object ZipRewriter {

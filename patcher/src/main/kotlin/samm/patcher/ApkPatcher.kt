@@ -65,6 +65,16 @@ object ApkPatcher {
         return GameApks(parts)
     }
 
+    /** Отчёт о точке входа для AML (без изменения APK). */
+    fun describeHook(apks: List<File>, gameLib: String = "GTASA"): String {
+        val game = inspect(apks, gameLib)
+        ZipFile.builder().setFile(game.base.file).get().use { zip ->
+            val dexes = zip.entries.asSequence().map { it.name }.filter { DEX_RE.matches(it) }.toList()
+                .associateWith { zip.getInputStream(zip.getEntry(it)).readBytes() }
+            return "mainActivity=${game.base.manifest.mainActivity}; hook=" + DexPatcher.describeHook(dexes, game.base.manifest.mainActivity, gameLib)
+        }
+    }
+
     /** Вытащить файл из APK игры (например, lib/arm64-v8a/libGTASA.so). Возвращает SHA-256 или null, если нет. */
     fun extractEntry(apks: List<File>, entryName: String, out: OutputStream): String? {
         for (f in apks) {

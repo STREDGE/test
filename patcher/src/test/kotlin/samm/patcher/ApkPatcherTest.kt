@@ -137,6 +137,8 @@ class ApkPatcherTest {
         assertEquals(setOf("arm64-v8a"), game.abis)
         assertEquals("config.arm64_v8a", game.partWithLib("arm64-v8a")!!.label)
         assertEquals(true, game.partWithLib("arm64-v8a")!!.gameLibs["arm64-v8a"])
+        val hook = ApkPatcher.describeHook(makeGame())
+        assertTrue("Lcom/rockstargames/gtasa/GTASA;-><clinit>" in hook && "AFTER_LOAD_LIBRARY" in hook, hook)
     }
 
     @Test
