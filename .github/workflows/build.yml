@@ -1,0 +1,89 @@
+name: build
+
+on:
+  push:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  native:
+    name: AML (NDK)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Clone AndroidModLoader (MIT)
+        run: |
+          git clone --depth 1 --recursive --shallow-submodules https://github.com/RusJJ/AndroidModLoader.git native/build/aml
+          git -C native/build/aml log -1 --format='AML commit %H %cd'
+
+      - name: Build libAML.so
+        working-directory: native/build/aml
+        run: |
+          "$ANDROID_NDK_LATEST_HOME/ndk-build" NDK_PROJECT_PATH=. APP_BUILD_SCRIPT=./Android.mk NDK_APPLICATION_MK=./Application.mk -j"$(nproc)"
+          find libs -name '*.so' -exec ls -la {} \;
+
+      - name: Collect payload
+        run: |
+          mkdir -p payload
+          for abi in arm64-v8a armeabi-v7a; do
+            if [ -f "native/build/aml/libs/$abi/libAML.so" ]; then
+              mkdir -p "payload/$abi"
+              cp "native/build/aml/libs/$abi/libAML.so" "payload/$abi/"
+            fi
+          done
+          find payload -type f
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: payload
+          path: payload
+          if-no-files-found: error
+
+  app:
+    name: Tests + APK
+    needs: native
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: 17
+
+      - uses: gradle/actions/setup-gradle@v4
+
+      - uses: actions/download-artifact@v4
+        with:
+          name: payload
+          path: app/build/payload-assets/payload
+
+      - name: Unit tests (IMG, моды, патчер)
+        run: ./gradlew --no-daemon :modcore:test :patcher:test
+
+      - name: Build APK
+        run: ./gradlew --no-daemon :app:assembleRelease
+
+      - name: Test reports
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: test-reports
+          path: |
+            modcore/build/reports/tests
+            patcher/build/reports/tests
+
+      - name: Rename APK
+        run: |
+          mkdir -p out
+          cp app/build/outputs/apk/release/app-release.apk "out/SA-Mod-Manager-${GITHUB_SHA::7}.apk"
+          ls -la out
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: SA-Mod-Manager-apk
+          path: out/*.apk
+          if-no-files-found: error

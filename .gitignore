@@ -1,0 +1,13 @@
+.gradle/
+build/
+local.properties
+*.iml
+.idea/
+.DS_Store
+native/build/
+# Файлы игры (собственность Rockstar) в репозиторий не кладём
+*.so
+*.obb
+*.img
+*.apk
+!gradle/wrapper/gradle-wrapper.jar
