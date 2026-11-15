@@ -100,11 +100,12 @@ class MainActivity : Activity() {
         val b1 = button("1. Выгрузить libGTASA.so в «Загрузки»") { exportLib() }
         val b2 = button("2. Проверить запуск после переподписи (без модов)") { startPatch(PatchMode.TRIAL) }
         btnAml = button("3. Установить AML + CLEO") { startPatch(PatchMode.AML) }
+        val bMods = button("Моды: CLEO, AML, gta3.img…") { startActivity(Intent(this, ModsActivity::class.java)) }
         val b4 = button("Вернуть оригинал (удалить пропатченную игру)") { restoreOriginal() }
         val b5 = button("Разрешить доступ к файлам (для бэкапа OBB)") { Obb.requestAllFilesAccess(this) }
         val b6 = button("Отправить лог") { shareLog() }
         val b7 = button("Запустить игру с проверкой") { if (!LaunchWatchService.launchAndWatch(this)) Events.post(this, "Игра не установлена") }
-        buttons = listOf(b1, b2, btnAml, b4, b5, b6, b7)
+        buttons = listOf(b1, b2, btnAml, bMods, b4, b5, b6, b7)
 
         root.addView(TextView(this).apply { text = "Журнал"; setTypeface(typeface, Typeface.BOLD); setPadding(0, pad, 0, 0) })
         logView = TextView(this).apply { textSize = 12f; typeface = Typeface.MONOSPACE; setTextIsSelectable(true) }

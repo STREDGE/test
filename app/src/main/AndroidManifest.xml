@@ -41,6 +41,11 @@
             </intent-filter>
         </activity>
 
+        <activity
+            android:name=".ModsActivity"
+            android:exported="false"
+            android:label="Моды" />
+
         <receiver
             android:name=".InstallReceiver"
             android:exported="false" />
