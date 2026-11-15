@@ -94,6 +94,16 @@ jobs:
           cp app/build/outputs/apk/release/app-release.apk "out/SA-Mod-Manager-${GITHUB_SHA::7}.apk"
           ls -la out
 
+      - name: Check APK contents
+        run: |
+          apk=$(ls out/*.apk)
+          unzip -l "$apk" | grep -E 'payload/|classes' || true
+          # Мост должен быть в dex менеджера — его патчер копирует в игру.
+          unzip -p "$apk" 'classes*.dex' | grep -aq 'Lsamm/bridge/Bridge;' && echo "bridge: OK"
+          unzip -p "$apk" 'classes*.dex' | grep -aq 'Lsamm/bridge/BridgeProvider;' && echo "provider: OK"
+          if unzip -l "$apk" | grep -q 'assets/payload/arm64-v8a/libAML.so'; then echo "AML arm64: OK"; else echo "::warning::AML не попал в APK"; fi
+          "$ANDROID_HOME"/build-tools/*/apksigner verify --print-certs "$apk" | head -3
+
       - uses: actions/upload-artifact@v4
         with:
           name: SA-Mod-Manager-apk
