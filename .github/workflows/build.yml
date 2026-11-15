@@ -48,6 +48,8 @@ jobs:
   app:
     name: Tests + APK
     needs: native
+    # APK собираем, даже если AML не собрался (тогда кнопка AML в менеджере просто неактивна).
+    if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
@@ -60,6 +62,7 @@ jobs:
       - uses: gradle/actions/setup-gradle@v4
 
       - uses: actions/download-artifact@v4
+        continue-on-error: true
         with:
           name: payload
           path: app/build/payload-assets/payload
