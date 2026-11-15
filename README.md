@@ -1,5 +1,7 @@
 # SA Mod Manager
 
+**Скачать APK:** https://github.com/STREDGE/test/releases/download/latest/SA-Mod-Manager.apk
+
 Android-приложение для GTA San Andreas (версия из Google Play, 2.11.x, 64 бит), без root:
 
 - встраивает в установленную игру **AML** (AndroidModLoader) — патч APK прямо на телефоне;

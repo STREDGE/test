@@ -57,6 +57,8 @@ jobs:
     # APK собираем, даже если AML не собрался (тогда кнопка AML в менеджере просто неактивна).
     if: ${{ !cancelled() }}
     runs-on: ubuntu-latest
+    permissions:
+      contents: write   # публикация APK в релиз «latest»
     steps:
       - uses: actions/checkout@v4
 
@@ -109,3 +111,29 @@ jobs:
           name: SA-Mod-Manager-apk
           path: out/*.apk
           if-no-files-found: error
+
+      # Прямая ссылка без входа в GitHub и без zip:
+      # https://github.com/STREDGE/test/releases/download/latest/SA-Mod-Manager.apk
+      - name: Prepare release file
+        if: github.ref_name == 'ccr-476936e2-u3ff6o' || github.event_name == 'workflow_dispatch'
+        run: |
+          mkdir -p release
+          cp out/*.apk release/SA-Mod-Manager.apk
+          cat > release/notes.md <<EOF
+          Последняя сборка SA Mod Manager (коммит ${GITHUB_SHA::7}).
+
+          **Установка:** нажмите на SA-Mod-Manager.apk ниже → «Скачать» → откройте файл → разрешите установку из этого источника.
+          EOF
+
+      - name: Publish to release "latest"
+        if: github.ref_name == 'ccr-476936e2-u3ff6o' || github.event_name == 'workflow_dispatch'
+        uses: softprops/action-gh-release@v2
+        with:
+          tag_name: latest
+          target_commitish: ${{ github.sha }}
+          name: SA Mod Manager (последняя сборка)
+          body_path: release/notes.md
+          prerelease: true
+          make_latest: true
+          overwrite_files: true
+          files: release/SA-Mod-Manager.apk
